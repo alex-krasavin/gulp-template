@@ -8,8 +8,20 @@ import fs from "fs";
 import map from "gulp-sourcemaps";
 import plumber from "gulp-plumber";
 import notify from "gulp-notify";
+import webpack from "webpack-stream";
+import config from "./webpack.config.mjs"
 const sass = gulpSass(nodeSass);
 const {src,dest} = gulp;
+
+const notifyConfig = (title) => { 
+    return {
+        errorHandler: notify.onError ({
+        title,
+        message: "Error <%= error.message%>",
+        sound:false 
+        })
+    }
+};
 
 // Таска для очищения dist
 gulp.task("clean", function (done) {
@@ -23,14 +35,7 @@ gulp.task("clean", function (done) {
 // Таска для добавления Html шаблонов
 gulp.task("html", function () {
     return src("./src/*.html")
-        .pipe(plumber({
-            errorHandler: notify.onError ({
-                title:"html",
-                message: "Error <%= error.message%>",
-                sound:false
-            })
-        }
-        ))
+        .pipe(plumber(notifyConfig("HTML")))
         .pipe(fileInclude ({
             prefix: "@@",
             basepath: "@file"
@@ -41,14 +46,7 @@ gulp.task("html", function () {
 // Таска для компиляции scss
 gulp.task("sass",function () {
     return src("./src/scss/*.scss")
-        .pipe(plumber({
-            errorHandler: notify.onError ({
-                title:"style",
-                message: "Error <%= error.message%>",
-                sound:false
-            })
-        }
-        ))
+        .pipe(plumber(notifyConfig("SCSS")))
         .pipe(map.init())
         .pipe(sass())
         .pipe(map.write())
@@ -73,17 +71,25 @@ gulp.task("server", function() {
     }))
 })
 
+// Таска для js файлов
+gulp.task("js", function () {
+    return src("./src/js/*.js")
+    .pipe(plumber(notifyConfig("JS")))
+    .pipe(webpack(config))
+    .pipe(dest("./dist/js/"))
+})
+
 // Слежение за файлами
 gulp.task("watch", function () {
     gulp.watch("./src/scss/**/*.scss", gulp.parallel("sass"))
     gulp.watch("./src/img/**/*", gulp.parallel("img"))
     gulp.watch("./src/fonts/**/*", gulp.parallel("fonts"))
     gulp.watch("./src/**/*.html", gulp.parallel("html"))
-
+    gulp.watch("./src/js/**/*.js", gulp.parallel("js"))
 })
 
 gulp.task ("default", gulp.series(
     "clean",
-    gulp.parallel("html","sass","img","fonts"),
+    gulp.parallel("html","sass","img","fonts","js"),
     gulp.parallel("watch","server"),
 ))
