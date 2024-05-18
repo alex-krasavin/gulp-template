@@ -10,6 +10,7 @@ import plumber from "gulp-plumber";
 import notify from "gulp-notify";
 import webpack from "webpack-stream";
 import config from "./webpack.config.mjs"
+import babel from "gulp-babel";
 const sass = gulpSass(nodeSass);
 const {src,dest} = gulp;
 
@@ -75,6 +76,7 @@ gulp.task("server", function() {
 gulp.task("js", function () {
     return src("./src/js/*.js")
     .pipe(plumber(notifyConfig("JS")))
+    .pipe(babel())
     .pipe(webpack(config))
     .pipe(dest("./dist/js/"))
 })
