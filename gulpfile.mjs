@@ -11,6 +11,13 @@ import notify from "gulp-notify";
 import webpack from "webpack-stream";
 import config from "./webpack.config.mjs"
 import babel from "gulp-babel";
+import imagemin from 'gulp-imagemin';
+import webp from 'gulp-webp';
+import webpHtml from "gulp-webp-html";
+import webpCss from "gulp-webp-css";
+import changed from 'gulp-changed';
+import autoprefixer from 'gulp-autoprefixer';
+import csso from "gulp-csso";
 const sass = gulpSass(nodeSass);
 const {src,dest} = gulp;
 
@@ -36,32 +43,48 @@ gulp.task("clean", function (done) {
 // Таска для добавления Html шаблонов
 gulp.task("html", function () {
     return src("./src/*.html")
+        .pipe(changed("./dist/"))
         .pipe(plumber(notifyConfig("HTML")))
         .pipe(fileInclude ({
             prefix: "@@",
             basepath: "@file"
         }))
+        .pipe(webpHtml())
         .pipe(dest("./dist/"))
 })
 
 // Таска для компиляции scss
 gulp.task("sass",function () {
     return src("./src/scss/*.scss")
+        .pipe(changed("./dist/css/"))
         .pipe(plumber(notifyConfig("SCSS")))
         .pipe(map.init())
+        .pipe(autoprefixer())
+        .pipe(webpCss())
         .pipe(sass())
         .pipe(map.write())
+        .pipe(csso()) 
         .pipe(dest("./dist/css/"))
 })
 
 // Копирование картинок
 gulp.task("img", function() {
-    return src("./src/img/**/*").pipe(dest("./dist/img/"))
+    return src("./src/img/**/*")
+    .pipe(changed("./dist/img/"))
+    .pipe(webp())
+    .pipe(dest("./dist/img/"))
+
+    .pipe(src("./src/img/**/*"))
+    .pipe(changed("./dist/img/"))
+    .pipe(imagemin({verbose:true}))
+    .pipe(dest("./dist/img/"))
 })
 
 // Копирование Шрифтов
 gulp.task("fonts", function() {
-    return src("./src/fonts/**/*").pipe(dest("./dist/fonts/"))
+    return src("./src/fonts/**/*")
+    .pipe(changed("./dist/fonts/"))
+    .pipe(dest("./dist/fonts/"))
 })
 
 // Автообновление сервера
@@ -75,6 +98,7 @@ gulp.task("server", function() {
 // Таска для js файлов
 gulp.task("js", function () {
     return src("./src/js/*.js")
+    .pipe(changed("./dist/js/"))
     .pipe(plumber(notifyConfig("JS")))
     .pipe(babel())
     .pipe(webpack(config))

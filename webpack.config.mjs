@@ -2,7 +2,7 @@ const config = {
     mode:"production",
     entry: {
         index: "./src/js/index.js",
-        // contacts: "./src/js/contacts.js"
+        // contacts: "./src/js/contacts.js" каждый новый файл для страницы добавлять сюда
     },
     output: {
         filename: "[name].bundle.js"
